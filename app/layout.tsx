@@ -11,6 +11,10 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "AbsenKi' - Absensi Digital yang Mudah, Cepat, dan Akurat",
   description: "Aplikasi Absensi Digital berbasis QR Code",
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export default function RootLayout({
