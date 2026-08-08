@@ -15,6 +15,8 @@ import {
   ChevronLeft,
   ChevronDown
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { signOut } from '@/lib/auth';
 
 const menuItems = [
   { name: 'Beranda', path: '/dashboard', icon: Home },
@@ -29,6 +31,21 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(true);
+  const { user, profil } = useAuth();
+
+  // Data user untuk ditampilkan
+  const displayName = profil?.displayName || user?.profile?.name || user?.email || 'Guru';
+  const photoURL = profil?.photoUrl || user?.profile?.avatar_url || '';
+  const avatarUrl = photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=10b981&color=fff`;
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      // signOut() sudah redirect ke /login
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <div 
@@ -128,16 +145,16 @@ export default function Sidebar() {
           <>
             <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors mb-2">
               <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
-                <img src="https://ui-avatars.com/api/?name=Budi+Santoso&background=10b981&color=fff" alt="Profile" className="w-full h-full object-cover" />
+                <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </div>
               <div className="flex-1 overflow-hidden">
-                <h4 className="text-sm font-semibold text-slate-800 truncate">Budi Santoso</h4>
+                <h4 className="text-sm font-semibold text-slate-800 truncate">{displayName}</h4>
                 <p className="text-xs text-slate-500">Guru</p>
               </div>
               <ChevronDown size={16} className="text-slate-400" />
             </div>
             <button 
-              onClick={() => router.push('/login')}
+              onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             >
               <LogOut size={18} />
@@ -148,15 +165,15 @@ export default function Sidebar() {
           <>
             <div className="group relative">
               <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden cursor-pointer shadow-sm">
-                <img src="https://ui-avatars.com/api/?name=Budi+Santoso&background=10b981&color=fff" alt="Profile" className="w-full h-full object-cover" />
+                <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </div>
               <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
-                Budi Santoso
+                {displayName}
               </div>
             </div>
             <div className="group relative">
               <button 
-                onClick={() => router.push('/login')}
+                onClick={handleLogout}
                 className="p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <LogOut size={20} />
