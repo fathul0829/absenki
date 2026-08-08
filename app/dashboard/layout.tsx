@@ -2,10 +2,10 @@
 
 import Sidebar from '@/components/Sidebar';
 import ProfileCheckModal from '@/components/ProfileCheckModal';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { Menu } from 'lucide-react';
 
 export default function DashboardLayout({
   children,
@@ -14,6 +14,7 @@ export default function DashboardLayout({
 }) {
   const { user, loading, profilLengkap } = useAuth();
   const router = useRouter();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,9 +41,32 @@ export default function DashboardLayout({
 
   // User ada — render dashboard, modal akan muncul jika profil belum lengkap
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      <Sidebar />
-      <div className="flex-1 p-8 overflow-y-auto min-h-screen">
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row relative overflow-hidden">
+      {/* Mobile Header */}
+      <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 sticky top-0 z-20">
+        <div className="flex items-center gap-2">
+           <img src="/logo/logo only 2(no bg).png" alt="Logo" className="w-8 h-8 object-contain" />
+           <span className="font-bold text-lg text-emerald-600">AbsenKi</span>
+        </div>
+        <button onClick={() => setIsMobileSidebarOpen(true)} className="p-2 bg-slate-100 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors">
+          <Menu size={24} />
+        </button>
+      </div>
+
+      {/* Mobile Sidebar Overlay (Backdrop) */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 z-30 md:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Area */}
+      <div className={`fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <Sidebar onMobileClose={() => setIsMobileSidebarOpen(false)} />
+      </div>
+
+      <div className="flex-1 p-4 md:p-8 overflow-y-auto h-screen md:h-auto min-h-screen w-full">
         {!profilLengkap && <ProfileCheckModal />}
         {children}
       </div>

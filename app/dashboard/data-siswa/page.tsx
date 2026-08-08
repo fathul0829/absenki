@@ -376,8 +376,8 @@ export default function DataSiswaPage() {
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
         {/* Toolbar */}
         <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between gap-4 items-center bg-slate-50/50">
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <div className="relative w-full sm:w-auto">
               <select 
                 value={kelasFilter}
                 onChange={e => { setKelasFilter(e.target.value); setCurrentPage(1); }}
@@ -391,7 +391,7 @@ export default function DataSiswaPage() {
               <Filter size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
             
-            <div className="relative flex-1 sm:w-64">
+            <div className="relative w-full sm:w-64">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Search size={16} className="text-slate-400" />
               </div>
@@ -441,7 +441,7 @@ export default function DataSiswaPage() {
                 <thead className="bg-slate-50 text-slate-500 uppercase font-semibold text-xs border-b border-slate-200">
                   <tr>
                     <th className="px-6 py-4 w-16 text-center">No</th>
-                    <th className="px-6 py-4">Foto</th>
+                    <th className="px-6 py-4 hidden md:table-cell">Foto</th>
                     <th className="px-6 py-4">Nama Lengkap</th>
                     <th className="px-6 py-4">NIS / NISN</th>
                     <th className="px-6 py-4">Kelas</th>
@@ -453,7 +453,7 @@ export default function DataSiswaPage() {
                   {paginatedStudents.map((student, idx) => (
                     <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4 text-center font-medium text-slate-500">{startItem + idx}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 hidden md:table-cell">
                         <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-200">
                           <img src={`https://ui-avatars.com/api/?name=${student.nama_lengkap.replace(/\s+/g, '+')}&background=f8fafc&color=64748b`} alt="Avatar" className="w-full h-full object-cover" />
                         </div>
@@ -463,7 +463,7 @@ export default function DataSiswaPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="font-mono text-slate-700">{student.nis}</div>
-                        <div className="text-xs text-slate-400 font-mono">{student.nisn}</div>
+                        <div className="text-xs text-slate-400 font-mono hidden md:block">{student.nisn}</div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">

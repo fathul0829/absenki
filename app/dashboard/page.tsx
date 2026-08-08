@@ -137,7 +137,7 @@ export default function DashboardPage() {
       />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
             <Users size={24} />
@@ -184,7 +184,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           {/* Quick Actions */}
           <section>
@@ -233,8 +233,8 @@ export default function DashboardPage() {
               <h3 className="text-lg font-bold text-slate-800">Sesi Hari Ini</h3>
               <Link href="/dashboard/rekap-kehadiran" className="text-sm font-medium text-emerald-600 hover:text-emerald-700">Lihat Semua</Link>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="p-6 text-center text-sm text-slate-500">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-x-auto">
+              <div className="p-6 text-center text-sm text-slate-500 min-w-max">
                 Data sesi terintegrasi otomatis dengan absensi.
               </div>
             </div>

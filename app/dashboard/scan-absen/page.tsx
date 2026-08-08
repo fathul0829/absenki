@@ -273,7 +273,7 @@ export default function ScanAbsenPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-24">
         {/* Left Column: Camera */}
         <div className="lg:col-span-3 space-y-4">
-          <div className="bg-slate-900 rounded-3xl overflow-hidden aspect-video relative flex items-center justify-center shadow-lg border-4 border-slate-800">
+          <div className="bg-slate-900 rounded-3xl overflow-hidden aspect-[4/3] lg:aspect-video relative flex items-center justify-center shadow-lg border-4 border-slate-800">
             <video ref={videoRef} playsInline className="absolute inset-0 w-full h-full object-cover"></video>
             <canvas ref={canvasRef} className="hidden"></canvas>
             

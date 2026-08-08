@@ -117,7 +117,7 @@ export default function RekapKehadiranPage() {
       />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-8">
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
             <CalendarCheck size={24} />
@@ -144,7 +144,7 @@ export default function RekapKehadiranPage() {
 
       {/* Filters & Actions */}
       <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col xl:flex-row justify-between gap-4 mb-6">
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full xl:w-auto">
           
           <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
             <button 
@@ -173,7 +173,7 @@ export default function RekapKehadiranPage() {
               />
             </div>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
               <div className="relative">
                 <input 
                   type="date" 
@@ -208,7 +208,7 @@ export default function RekapKehadiranPage() {
           </select>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto">
           <button onClick={resetFilter} className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-600 bg-white rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">
             <RotateCcw size={16} />
             Reset Filter

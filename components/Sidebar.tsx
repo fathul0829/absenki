@@ -27,7 +27,7 @@ const menuItems = [
   { name: 'Pengaturan', path: '/dashboard/pengaturan', icon: Settings },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(true);
@@ -44,6 +44,12 @@ export default function Sidebar() {
       // signOut() sudah redirect ke /login
     } catch (error) {
       console.error('Logout error:', error);
+    }
+  };
+
+  const handleMenuClick = () => {
+    if (window.innerWidth < 768 && onMobileClose) {
+      onMobileClose();
     }
   };
 
@@ -68,10 +74,10 @@ export default function Sidebar() {
                 unoptimized
               />
             </div>
-            {/* Toggle Button (Open State) */}
+            {/* Toggle Button (Open State) - hide on mobile since mobile handles sidebar via backdrop */}
             <button 
               onClick={() => setIsOpen(false)}
-              className="p-1.5 rounded-full text-slate-400 hover:bg-slate-800 hover:text-white transition-colors absolute right-4 top-1/2 -translate-y-1/2 shrink-0"
+              className="hidden md:flex p-1.5 rounded-full text-slate-400 hover:bg-slate-800 hover:text-white transition-colors absolute right-4 top-1/2 -translate-y-1/2 shrink-0"
               title="Tutup Sidebar"
             >
               <ChevronLeft size={18} />
@@ -81,7 +87,7 @@ export default function Sidebar() {
           <div className="group relative">
             <button 
               onClick={() => setIsOpen(true)}
-              className="relative w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-50 transition-colors"
+              className="relative w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-50 transition-colors hidden md:flex"
             >
               <div className="relative w-10 h-10">
                 <Image 
@@ -94,7 +100,7 @@ export default function Sidebar() {
               </div>
             </button>
             {/* Tooltip */}
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
+            <div className="hidden md:block absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
               Buka Sidebar
             </div>
           </div>
@@ -102,7 +108,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 overflow-hidden py-4 space-y-2 ${isOpen ? 'px-4' : 'px-2'}`}>
+      <nav className={`flex-1 overflow-y-auto py-4 space-y-2 ${isOpen ? 'px-4' : 'px-2'}`}>
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path));
@@ -111,6 +117,7 @@ export default function Sidebar() {
             <div key={item.path} className="group relative">
               <Link 
                 href={item.path}
+                onClick={handleMenuClick}
                 className={`flex items-center rounded-lg transition-colors overflow-hidden ${
                   isOpen ? 'px-4 py-3 gap-3' : 'justify-center p-3 w-12 h-12 mx-auto'
                 } ${
