@@ -3,13 +3,11 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import { 
   User, 
-  Moon, 
   Camera, 
   QrCode, 
   FileDown, 
   Info,
   LogOut,
-  Monitor,
   Save,
   CheckCircle2,
   Loader2
@@ -32,23 +30,10 @@ export default function PengaturanPage() {
   const [isEditingMapel, setIsEditingMapel] = useState(false);
   const [tempNama, setTempNama] = useState('');
   const [tempMapel, setTempMapel] = useState('');
-  const [theme, setTheme] = useState('light');
-  
   const [loadingSave, setLoadingSave] = useState(false);
   const [notification, setNotification] = useState('');
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    setTheme(savedTheme);
-    if (savedTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else if (savedTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.documentElement.classList.add('dark');
-      }
-    }
 
     if (profil) {
       setNamaGuru(profil.displayName || '');
@@ -57,23 +42,6 @@ export default function PengaturanPage() {
       setTempMapel(profil.mataPelajaran || '');
     }
   }, [profil]);
-
-  const changeTheme = (newTheme: string) => {
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else if (newTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
-      // System
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    }
-  };
 
   const handleSaveMapel = async () => {
     if (!tempMapel.trim() || !tempNama.trim() || !user) return;
@@ -194,49 +162,7 @@ export default function PengaturanPage() {
           </p>
         </div>
 
-        {/* 2. Preferensi Tampilan */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center">
-                <Moon size={20} />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">Preferensi Tampilan</h3>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <button 
-                onClick={() => changeTheme('light')} 
-                className={`flex flex-col items-center gap-2 p-3 border-2 rounded-xl transition-colors ${theme === 'light' ? 'border-emerald-500 bg-emerald-50' : 'border-transparent bg-slate-50 hover:bg-slate-100'}`}
-              >
-                <div className="w-full h-12 bg-white border border-slate-200 rounded shadow-sm flex flex-col gap-1 p-1">
-                  <div className="w-full h-2 bg-slate-100 rounded"></div>
-                  <div className="w-2/3 h-2 bg-slate-100 rounded"></div>
-                </div>
-                <span className={`text-xs font-bold ${theme === 'light' ? 'text-emerald-700' : 'text-slate-600'}`}>Terang</span>
-              </button>
-              <button 
-                onClick={() => changeTheme('dark')}
-                className={`flex flex-col items-center gap-2 p-3 border-2 rounded-xl transition-colors ${theme === 'dark' ? 'border-emerald-500 bg-emerald-50' : 'border-transparent bg-slate-50 hover:bg-slate-100'}`}
-              >
-                <div className="w-full h-12 bg-slate-800 border border-slate-700 rounded shadow-sm flex flex-col gap-1 p-1">
-                  <div className="w-full h-2 bg-slate-700 rounded"></div>
-                  <div className="w-2/3 h-2 bg-slate-700 rounded"></div>
-                </div>
-                <span className={`text-xs font-bold ${theme === 'dark' ? 'text-emerald-700' : 'text-slate-600'}`}>Gelap</span>
-              </button>
-              <button 
-                onClick={() => changeTheme('system')}
-                className={`flex flex-col items-center gap-2 p-3 border-2 rounded-xl transition-colors ${theme === 'system' ? 'border-emerald-500 bg-emerald-50' : 'border-transparent bg-slate-50 hover:bg-slate-100'}`}
-              >
-                <div className="w-full h-12 bg-slate-200 border border-slate-300 rounded shadow-sm flex items-center justify-center">
-                  <Monitor size={16} className="text-slate-400" />
-                </div>
-                <span className={`text-xs font-bold ${theme === 'system' ? 'text-emerald-700' : 'text-slate-600'}`}>Sistem</span>
-              </button>
-            </div>
-          </div>
-        </div>
+
 
         {/* 3. Pengaturan Kamera */}
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">

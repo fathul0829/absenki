@@ -1,14 +1,27 @@
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Header from '@/components/Header';
-import { Camera, CheckCircle2, AlertCircle, Clock, Zap, Loader2, XCircle } from 'lucide-react';
-import jsQR from 'jsqr';
+import { Camera, CheckCircle2, AlertCircle, Clock, Zap, Loader2, XCircle, Calendar } from 'lucide-react';
+import { Html5Qrcode } from 'html5-qrcode';
 import { useAuth } from '@/context/AuthContext';
 import { getSiswaById } from '@/lib/siswa';
 import { getOrCreateSesi, type SesiAbsen } from '@/lib/sesi';
 import { cekDuplikat, addKehadiran, getKehadiranBySesi, type Kehadiran } from '@/lib/kehadiran';
 
 type NotificationType = 'success' | 'warning' | 'error' | '';
+
+function bunyiBeep(isError = false) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = isError ? 'sawtooth' : 'sine';
+  osc.frequency.value = isError ? 300 : 800;
+  gain.gain.setValueAtTime(0.1, ctx.currentTime);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + (isError ? 0.3 : 0.1));
+}
 
 export default function ScanAbsenPage() {
   const { user, profil, loading: authLoading } = useAuth();
@@ -25,6 +38,12 @@ export default function ScanAbsenPage() {
   const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
 
   const tanggalRef = useRef(tanggal);
+  const tanggalHariIni = new Date().toLocaleDateString('id-ID', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
   const lastScannedStrRef = useRef<string | null>(null);
   const lastScanTimeRef = useRef<number>(0);
   const isProcessingRef = useRef(false);
@@ -45,71 +64,37 @@ export default function ScanAbsenPage() {
 
   // Start camera
   useEffect(() => {
-    let requestAnimationFrameId: number;
-    let isActive = true;
-    let mediaStream: MediaStream | null = null;
+    const html5QrcodeScanner = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-    const startCamera = async () => {
-      try {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        if (isActive && videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-          videoRef.current.play();
-          requestAnimationFrameId = requestAnimationFrame(tick);
-        } else {
-          mediaStream.getTracks().forEach(track => track.stop());
-        }
-      } catch (err) {
-        console.error(err);
-        if (isActive) setErrorMsg('Kamera tidak tersedia atau akses ditolak.');
+    html5QrcodeScanner.start(
+      { facingMode: "environment" },
+      config,
+      (decodedText) => {
+        handleScan(decodedText);
+      },
+      (err) => {
+        // ignore frequent parse errors
       }
-    };
-
-    startCamera();
-
-    const tick = () => {
-      if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA && canvasRef.current) {
-        const canvas = canvasRef.current;
-        const video = videoRef.current;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const code = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: "dontInvert",
-          });
-          
-          if (code) {
-            handleScan(code.data);
-          }
-        }
-      }
-      if (isActive) {
-        requestAnimationFrameId = requestAnimationFrame(tick);
-      }
-    };
+    ).catch(err => {
+      console.error("Kamera error:", err);
+      setErrorMsg('Kamera tidak tersedia atau akses ditolak.');
+    });
 
     return () => {
-      isActive = false;
-      if (requestAnimationFrameId) cancelAnimationFrame(requestAnimationFrameId);
-      if (mediaStream) {
-        mediaStream.getTracks().forEach(track => track.stop());
+      if (html5QrcodeScanner.isScanning) {
+        html5QrcodeScanner.stop().catch(console.error);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleScan = async (dataStr: string) => {
-    const now = Date.now();
-    // Debounce: cegah scan berulang dalam 2 detik untuk QR yang sama
-    if (now - lastScanTimeRef.current < 2000 && lastScannedStrRef.current === dataStr) return;
     // Cegah proses paralel
     if (isProcessingRef.current) return;
 
     lastScannedStrRef.current = dataStr;
-    lastScanTimeRef.current = now;
+    lastScanTimeRef.current = Date.now();
     isProcessingRef.current = true;
     setIsProcessing(true);
 
@@ -119,12 +104,14 @@ export default function ScanAbsenPage() {
       try {
         dataSiswa = JSON.parse(dataStr);
       } catch {
+        bunyiBeep(true);
         showNotification('QR tidak dikenali', 'error');
         return;
       }
 
       // Validasi format QR AbsenKi
       if (!dataSiswa || !dataSiswa.studentId || !dataSiswa.nis) {
+        bunyiBeep(true);
         showNotification('QR tidak dikenali', 'error');
         return;
       }
@@ -132,12 +119,14 @@ export default function ScanAbsenPage() {
       // 2. Verifikasi siswa ada di database
       const siswa = await getSiswaById(dataSiswa.studentId);
       if (!siswa) {
+        bunyiBeep(true);
         showNotification('QR tidak valid', 'error');
         return;
       }
 
       // 3. Pastikan profil guru tersedia
       if (!user || !profil?.mataPelajaran) {
+        bunyiBeep(true);
         showNotification('Profil guru belum lengkap', 'error');
         return;
       }
@@ -154,6 +143,7 @@ export default function ScanAbsenPage() {
       // 5. Cek duplikat
       const sudahAbsen = await cekDuplikat(sesi.id, siswa.id);
       if (sudahAbsen) {
+        bunyiBeep(true);
         showNotification(`Siswa ${siswa.nama_lengkap} sudah absen`, 'warning');
         return;
       }
@@ -169,6 +159,7 @@ export default function ScanAbsenPage() {
       });
 
       // 7. Tampilkan notifikasi sukses
+      bunyiBeep(false);
       showNotification(`${siswa.nama_lengkap} — Hadir ✓`, 'success');
 
       // 8. Refresh list kehadiran dari database
@@ -177,10 +168,13 @@ export default function ScanAbsenPage() {
 
     } catch (err) {
       console.error('Error saat proses scan:', err);
+      bunyiBeep(true);
       showNotification('Terjadi kesalahan saat memproses scan', 'error');
     } finally {
-      isProcessingRef.current = false;
-      setIsProcessing(false);
+      setTimeout(() => {
+        isProcessingRef.current = false;
+        setIsProcessing(false);
+      }, 1500);
     }
   };
 
@@ -220,8 +214,8 @@ export default function ScanAbsenPage() {
       />
 
       {/* Control Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 mb-6">
-        <div className="flex-1">
+      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-row flex-wrap gap-4 items-start mb-6">
+        <div>
           <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Mata Pelajaran Aktif</label>
           <div className="flex items-center h-[42px]">
             <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -229,14 +223,12 @@ export default function ScanAbsenPage() {
             </span>
           </div>
         </div>
-        <div className="flex-1">
+        <div>
           <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Tanggal</label>
-          <input 
-            type="date" 
-            value={tanggal}
-            onChange={e => setTanggal(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 py-2 px-3 font-medium" 
-          />
+          <div className="flex items-center h-[42px] gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
+            <Calendar size={18} className="text-slate-500" />
+            <span className="text-sm font-medium text-slate-800">{tanggalHariIni}</span>
+          </div>
         </div>
       </div>
 
@@ -273,30 +265,31 @@ export default function ScanAbsenPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-24">
         {/* Left Column: Camera */}
         <div className="lg:col-span-3 space-y-4">
-          <div className="bg-slate-900 rounded-3xl overflow-hidden aspect-[4/3] lg:aspect-video relative flex items-center justify-center shadow-lg border-4 border-slate-800">
-            <video ref={videoRef} playsInline className="absolute inset-0 w-full h-full object-cover"></video>
-            <canvas ref={canvasRef} className="hidden"></canvas>
+          <div className="bg-slate-900 rounded-3xl overflow-hidden min-h-[300px] w-full relative flex items-center justify-center shadow-lg border-4 border-slate-800">
+            <style>{`
+              #reader__dashboard_section_csr span { display: none !important; }
+              #reader__dashboard_section_csr button {
+                background-color: #10b981;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 6px;
+                border: none;
+                margin-top: 10px;
+              }
+              #reader video {
+                width: 100% !important;
+                object-fit: cover !important;
+                min-height: 300px;
+              }
+            `}</style>
+            <div id="reader" className="w-full"></div>
             
-            {/* Camera corners */}
-            <div className="absolute top-8 left-8 w-12 h-12 border-t-4 border-l-4 border-emerald-500 rounded-tl-lg z-10 pointer-events-none"></div>
-            <div className="absolute top-8 right-8 w-12 h-12 border-t-4 border-r-4 border-emerald-500 rounded-tr-lg z-10 pointer-events-none"></div>
-            <div className="absolute bottom-8 left-8 w-12 h-12 border-b-4 border-l-4 border-emerald-500 rounded-bl-lg z-10 pointer-events-none"></div>
-            <div className="absolute bottom-8 right-8 w-12 h-12 border-b-4 border-r-4 border-emerald-500 rounded-br-lg z-10 pointer-events-none"></div>
-            
-            <div className="absolute top-4 left-4 bg-black/50 backdrop-blur text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 z-10 pointer-events-none">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Kamera Aktif
-            </div>
-
             {!errorMsg && (
-              <div className="text-slate-500 flex flex-col items-center gap-3 absolute inset-0 justify-center pointer-events-none">
-                <Camera size={48} className="opacity-0" />
+              <div className="absolute top-4 left-4 bg-black/50 backdrop-blur text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 z-10 pointer-events-none">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Kamera Aktif
               </div>
             )}
-            
-            <button className="absolute bottom-4 right-4 bg-black/50 hover:bg-black/70 backdrop-blur text-white p-3 rounded-full cursor-pointer transition-colors z-10 flex items-center justify-center">
-              <Zap size={20} className="text-yellow-400" />
-            </button>
           </div>
 
           <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex gap-3">
