@@ -46,24 +46,20 @@ export default function RekapKehadiranPage() {
   const tanggalDari = waktuMode === 'tunggal' ? tanggalTunggal : tanggalMulai;
   const tanggalSampai = waktuMode === 'tunggal' ? tanggalTunggal : tanggalSelesai;
 
-  const [semuaGuru, setSemuaGuru] = useState<any[]>([]);
-
   useEffect(() => {
     if (isOperator) {
       import('@/lib/guru').then(({ getDaftarMapel, getDaftarGuru }) => {
         getDaftarMapel().then(setDaftarMapel);
-        getDaftarGuru().then(setSemuaGuru);
+        getDaftarGuru().then(data => {
+          setDaftarGuru(data.filter(g => g.posisi === 'guru'));
+        });
       });
     }
   }, [isOperator]);
 
-  useEffect(() => {
-    let filtered = semuaGuru.filter(g => g.posisi === 'guru');
-    if (filterMapel) {
-      filtered = filtered.filter(g => g.mata_pelajaran === filterMapel);
-    }
-    setDaftarGuru(filtered);
-  }, [filterMapel, semuaGuru]);
+  const guruTerfilter = filterMapel
+    ? daftarGuru.filter(g => g.mata_pelajaran === filterMapel)
+    : daftarGuru;
 
   const fetchRekap = useCallback(async () => {
     if (!isOperator && !profil?.mataPelajaran) return;
@@ -296,7 +292,7 @@ export default function RekapKehadiranPage() {
                   className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 py-2 px-3 font-medium max-w-[200px]"
                 >
                   <option value="">Semua Guru</option>
-                  {daftarGuru.map(g => (
+                  {guruTerfilter.map(g => (
                     <option key={g.id} value={g.id}>{g.display_name}</option>
                   ))}
                 </select>
