@@ -7,6 +7,7 @@ export interface Guru {
   display_name: string;
   photo_url: string;
   mata_pelajaran: string;
+  posisi: 'guru' | 'operator';
   created_at: string;
 }
 
@@ -29,11 +30,15 @@ export async function getProfilGuru(authUserId: string): Promise<Guru | null> {
 }
 
 /**
- * Update field `display_name` dan `mata_pelajaran` di tabel `guru`
+ * Update field `display_name`, `mata_pelajaran`, dan `posisi` di tabel `guru`
  */
 export async function updateProfilGuru(
   authUserId: string,
-  data: { display_name?: string; mata_pelajaran?: string }
+  data: {
+    display_name?: string;
+    mata_pelajaran?: string;
+    posisi?: 'guru' | 'operator';
+  }
 ): Promise<Guru | null> {
   const { data: updatedData, error } = await insforge.database
     .from('guru')
@@ -55,6 +60,7 @@ export async function updateProfilGuru(
       ...currentLocal,
       namaLengkap: updatedData.display_name,
       mataPelajaran: updatedData.mata_pelajaran,
+      posisi: updatedData.posisi,
     })
   );
 
@@ -77,4 +83,41 @@ export async function getDaftarKelas(): Promise<string[]> {
   // Filter out duplicates and sort
   const kelasSet = new Set(data.map((item: any) => item.kelas));
   return Array.from(kelasSet).sort();
+}
+
+/**
+ * Ambil semua guru dari tabel guru.
+ * Dipakai oleh operator untuk filter di rekap kehadiran.
+ */
+export async function getDaftarGuru(): Promise<
+  { id: string; display_name: string; mata_pelajaran: string; posisi: string }[]
+> {
+  const { data, error } = await insforge.database
+    .from('guru')
+    .select('id, display_name, mata_pelajaran, posisi');
+
+  if (error || !data) {
+    console.error('Error fetching daftar guru:', error);
+    return [];
+  }
+
+  return data as { id: string; display_name: string; mata_pelajaran: string; posisi: string }[];
+}
+
+/**
+ * Ambil daftar mata pelajaran unik dari tabel sesi_absen.
+ * Dipakai oleh operator untuk filter di rekap kehadiran.
+ */
+export async function getDaftarMapel(): Promise<string[]> {
+  const { data, error } = await insforge.database
+    .from('sesi_absen')
+    .select('mata_pelajaran');
+
+  if (error || !data) {
+    console.error('Error fetching daftar mapel:', error);
+    return [];
+  }
+
+  const mapelSet = new Set(data.map((item: any) => item.mata_pelajaran).filter(Boolean));
+  return Array.from(mapelSet).sort();
 }

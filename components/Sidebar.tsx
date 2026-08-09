@@ -18,20 +18,24 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { signOut } from '@/lib/auth';
 
-const menuItems = [
-  { name: 'Beranda', path: '/dashboard', icon: Home },
-  { name: 'Data Siswa', path: '/dashboard/data-siswa', icon: Users },
-  { name: 'Import Excel', path: '/dashboard/import-excel', icon: FileSpreadsheet },
-  { name: 'Scan Absen', path: '/dashboard/scan-absen', icon: ScanLine },
-  { name: 'Rekap Kehadiran', path: '/dashboard/rekap-kehadiran', icon: ClipboardList },
-  { name: 'Pengaturan', path: '/dashboard/pengaturan', icon: Settings },
-];
+
 
 export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(true);
   const { user, profil } = useAuth();
+
+  const menuItems = [
+    { name: 'Beranda', path: '/dashboard', icon: Home },
+    { name: 'Data Siswa', path: '/dashboard/data-siswa', icon: Users },
+    { name: 'Import Excel', path: '/dashboard/import-excel', icon: FileSpreadsheet },
+    ...(profil?.posisi !== 'operator' ? [
+      { name: 'Scan Absen', path: '/dashboard/scan-absen', icon: ScanLine }
+    ] : []),
+    { name: 'Rekap Kehadiran', path: '/dashboard/rekap-kehadiran', icon: ClipboardList },
+    { name: 'Pengaturan', path: '/dashboard/pengaturan', icon: Settings },
+  ];
 
   // Data user untuk ditampilkan
   const displayName = profil?.displayName || user?.profile?.name || user?.email || 'Guru';
@@ -156,7 +160,7 @@ export default function Sidebar({ onMobileClose }: { onMobileClose?: () => void 
               </div>
               <div className="flex-1 overflow-hidden">
                 <h4 className="text-sm font-semibold text-slate-800 truncate">{displayName}</h4>
-                <p className="text-xs text-slate-500">Guru</p>
+                <p className="text-xs text-slate-500">{profil?.posisi === 'operator' ? 'Operator' : 'Guru'}</p>
               </div>
               <ChevronDown size={16} className="text-slate-400" />
             </div>

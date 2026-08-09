@@ -1,14 +1,26 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/Header';
-import { Download, RotateCcw, Users, CalendarCheck, Loader2 } from 'lucide-react';
+import { Download, RotateCcw, Users, CalendarCheck, Percent, Calendar, Loader2 } from 'lucide-react';
 import { daftarKelas } from '@/constants/kelas';
 import { useAuth } from '@/context/AuthContext';
-import { getRekapKehadiran, type Kehadiran, type FilterRekap } from '@/lib/kehadiran';
-import { exportKehadiranCSV } from '@/lib/export';
+import { insforge } from '@/lib/insforge';
+
+const KartuStatistik = ({ icon: Icon, label, value }: { icon: any, label: string, value: string | number }) => (
+  <div className="bg-white p-4 lg:p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
+      <Icon size={24} />
+    </div>
+    <div>
+      <p className="text-xs lg:text-sm font-medium text-slate-500">{label}</p>
+      <h3 className="text-xl lg:text-2xl font-bold text-slate-800">{value}</h3>
+    </div>
+  </div>
+);
 
 export default function RekapKehadiranPage() {
-  const { profil, loading: authLoading } = useAuth();
+  const { user, profil, loading: authLoading } = useAuth();
+  const isOperator = profil?.posisi === 'operator';
 
   const today = new Date().toISOString().split('T')[0];
   const [waktuMode, setWaktuMode] = useState<'tunggal' | 'rentang'>('tunggal');
@@ -16,69 +28,154 @@ export default function RekapKehadiranPage() {
   const [tanggalMulai, setTanggalMulai] = useState(today);
   const [tanggalSelesai, setTanggalSelesai] = useState(today);
   const [kelasFilter, setKelasFilter] = useState('');
-  const [dataRekap, setDataRekap] = useState<Kehadiran[]>([]);
+  
+  const [filterMapel, setFilterMapel] = useState('');
+  const [filterGuru, setFilterGuru] = useState('');
+  const [daftarMapel, setDaftarMapel] = useState<string[]>([]);
+  const [daftarGuru, setDaftarGuru] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  // Pagination
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
+  // Data states
+  const [daftarSiswa, setDaftarSiswa] = useState<any[]>([]);
+  const [sesiList, setSesiList] = useState<any[]>([]);
+  const [kehadiranList, setKehadiranList] = useState<any[]>([]);
 
   // Hitung tanggal dari & sampai berdasarkan mode
   const tanggalDari = waktuMode === 'tunggal' ? tanggalTunggal : tanggalMulai;
   const tanggalSampai = waktuMode === 'tunggal' ? tanggalTunggal : tanggalSelesai;
 
+  useEffect(() => {
+    if (isOperator) {
+      insforge.database.from('guru').select('*').neq('posisi', 'operator').then(({ data }) => {
+        if (data) {
+          setDaftarGuru(data);
+          const mapels = Array.from(new Set(data.map(g => g.mata_pelajaran).filter(Boolean)));
+          setDaftarMapel(mapels);
+        }
+      });
+    }
+  }, [isOperator]);
+
   const fetchRekap = useCallback(async () => {
-    if (!profil?.mataPelajaran) return;
+    if (!isOperator && !profil?.mataPelajaran) return;
     if (!tanggalDari || !tanggalSampai) return;
 
     setLoading(true);
     try {
-      const filter: FilterRekap = {
-        mataPelajaran: profil.mataPelajaran,
-        tanggalDari,
-        tanggalSampai,
-        kelas: kelasFilter || undefined,
-      };
-      const data = await getRekapKehadiran(filter);
-      setDataRekap(data);
-      setCurrentPage(1);
+      const mapel = isOperator ? (filterMapel || undefined) : profil.mataPelajaran;
+      const guru = isOperator ? (filterGuru || undefined) : user?.id;
+
+      // 1. Fetch Sesi
+      let querySesi = insforge.database.from('sesi_absen')
+        .select('*')
+        .gte('tanggal', tanggalDari)
+        .lte('tanggal', tanggalSampai);
+      
+      if (mapel) querySesi = querySesi.eq('mata_pelajaran', mapel);
+      if (guru) querySesi = querySesi.eq('guru_uid', guru);
+      if (kelasFilter) querySesi = querySesi.eq('kelas', kelasFilter);
+      
+      const { data: sesiData } = await querySesi.order('created_at', { ascending: true });
+      setSesiList(sesiData || []);
+      const sesiIds = sesiData?.map(s => s.id) || [];
+      
+      // 2. Fetch Siswa
+      let querySiswa = insforge.database.from('siswa').select('*');
+      if (kelasFilter) querySiswa = querySiswa.eq('kelas', kelasFilter);
+      const { data: siswaData } = await querySiswa.order('nama_lengkap', { ascending: true });
+      setDaftarSiswa(siswaData || []);
+      
+      // 3. Fetch Kehadiran
+      if (sesiIds.length > 0) {
+        const { data: hadirData } = await insforge.database.from('kehadiran')
+          .select('*')
+          .in('session_id', sesiIds);
+        setKehadiranList(hadirData || []);
+      } else {
+        setKehadiranList([]);
+      }
     } catch (err) {
       console.error('Error fetching rekap:', err);
     } finally {
       setLoading(false);
     }
-  }, [profil?.mataPelajaran, tanggalDari, tanggalSampai, kelasFilter]);
+  }, [isOperator, profil?.mataPelajaran, filterMapel, filterGuru, tanggalDari, tanggalSampai, kelasFilter, user?.id]);
 
-  // Fetch data saat filter berubah
   useEffect(() => {
     fetchRekap();
   }, [fetchRekap]);
 
+  // Build data tabel
+  const tabelData = daftarSiswa.map(siswa => {
+    const waktuPerSesi = sesiList.map(sesi => {
+      const hadir = kehadiranList.find(
+        k => k.student_id === siswa.id && k.session_id === sesi.id
+      );
+      return hadir
+        ? new Date(hadir.scanned_at).toLocaleTimeString('id-ID', {
+            hour: '2-digit', minute: '2-digit', hour12: false
+          })
+        : '—';
+    });
+    const jumlahHadir = waktuPerSesi.filter(w => w !== '—').length;
+    const persentase = sesiList.length > 0
+      ? Math.round((jumlahHadir / sesiList.length) * 100)
+      : 0;
+    return { ...siswa, waktuPerSesi, jumlahHadir, persentase };
+  });
+
+  const totalSiswa = daftarSiswa.length;
+  const totalKehadiran = kehadiranList.length;
+  const totalSesi = sesiList.length;
+  const persentaseTotal = (totalSiswa > 0 && totalSesi > 0) 
+    ? Math.round((totalKehadiran / (totalSiswa * totalSesi)) * 100) 
+    : 0;
+
   const handleExportCSV = () => {
-    if (dataRekap.length === 0) {
+    if (tabelData.length === 0) {
       alert('Tidak ada data untuk diekspor.');
       return;
     }
     setIsExporting(true);
-    try {
-      const mapel = profil?.mataPelajaran?.replace(/\s+/g, '_') || 'mapel';
-      const filename = `rekap_kehadiran_${mapel}_${tanggalDari}_sd_${tanggalSampai}.csv`;
-      exportKehadiranCSV(dataRekap, filename);
-    } finally {
-      setTimeout(() => setIsExporting(false), 500);
-    }
+    
+    const headerRow = ['No', 'Nama Lengkap', 'NIS', 'NISN', 'Kelas', 'Hadir', '% Kehadiran', ...sesiList.map((_, i) => `Sesi ${i + 1}`)];
+    const csvContent = [
+      headerRow.join(','),
+      ...tabelData.map((row, i) => [
+        i + 1,
+        `"${row.nama_lengkap}"`,
+        `"${row.nis}"`,
+        `"${row.nisn || ''}"`,
+        `"${row.kelas}"`,
+        row.jumlahHadir,
+        `${row.persentase}%`,
+        ...row.waktuPerSesi.map((w: string) => `"${w}"`)
+      ].join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const mapelName = (isOperator ? filterMapel : profil?.mataPelajaran) || 'semua';
+    link.setAttribute('href', url);
+    link.setAttribute('download', `rekap_kehadiran_${mapelName}_${tanggalDari}_sd_${tanggalSampai}.csv`);
+    link.click();
+    
+    setTimeout(() => setIsExporting(false), 500);
   };
 
   const resetFilter = () => {
     setKelasFilter('');
+    setFilterMapel('');
+    setFilterGuru('');
     setTanggalTunggal(today);
     setTanggalMulai(today);
     setTanggalSelesai(today);
     setWaktuMode('tunggal');
   };
 
-  // Loading state auth
   if (authLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -88,8 +185,7 @@ export default function RekapKehadiranPage() {
     );
   }
 
-  // Profil belum lengkap
-  if (!profil?.mataPelajaran) {
+  if (!isOperator && !profil?.mataPelajaran) {
     return (
       <>
         <Header title="Rekap Kehadiran" />
@@ -103,87 +199,55 @@ export default function RekapKehadiranPage() {
     );
   }
 
-  // Pagination logic
-  const totalPages = Math.ceil(dataRekap.length / itemsPerPage) || 1;
-  const paginatedData = dataRekap.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const startItem = dataRekap.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, dataRekap.length);
-
   return (
     <>
       <Header 
-        title={`Rekap Kehadiran — ${profil.mataPelajaran}`}
+        title={isOperator ? "Rekap Kehadiran Sekolah" : `Rekap Kehadiran — ${profil?.mataPelajaran}`}
         subtitle="Pantau dan kelola data kehadiran siswa secara keseluruhan"
       />
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
-            <CalendarCheck size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Total Kehadiran</p>
-            <h3 className="text-2xl font-bold text-slate-800">
-              {loading ? <Loader2 size={20} className="animate-spin" /> : dataRekap.length}
-            </h3>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
-            <Users size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Siswa Unik</p>
-            <h3 className="text-2xl font-bold text-slate-800">
-              {loading ? <Loader2 size={20} className="animate-spin" /> : new Set(dataRekap.map(d => d.student_id)).size}
-            </h3>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+        <KartuStatistik icon={Users} label="Total Siswa" value={loading ? '...' : totalSiswa} />
+        <KartuStatistik icon={CalendarCheck} label="Total Kehadiran" value={loading ? '...' : totalKehadiran} />
+        <KartuStatistik icon={Percent} label="Persentase Kehadiran" value={loading ? '...' : `${persentaseTotal}%`} />
+        <KartuStatistik icon={Calendar} label="Total Sesi" value={loading ? '...' : totalSesi} />
       </div>
 
-      {/* Filters & Actions */}
       <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col xl:flex-row justify-between gap-4 mb-6">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full xl:w-auto">
+        <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-4 w-full">
           
-          <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
-            <button 
-              onClick={() => setWaktuMode('tunggal')} 
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${waktuMode === 'tunggal' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Tunggal
-            </button>
-            <button 
-              onClick={() => setWaktuMode('rentang')} 
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${waktuMode === 'rentang' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Rentang
-            </button>
-          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200 shrink-0">
+              <button 
+                onClick={() => setWaktuMode('tunggal')} 
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${waktuMode === 'tunggal' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Tunggal
+              </button>
+              <button 
+                onClick={() => setWaktuMode('rentang')} 
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${waktuMode === 'rentang' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Rentang
+              </button>
+            </div>
 
-          <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
-
-          {waktuMode === 'tunggal' ? (
-            <div className="relative">
+            {waktuMode === 'tunggal' ? (
               <input 
                 type="date" 
                 value={tanggalTunggal}
                 onChange={e => setTanggalTunggal(e.target.value)}
                 className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block py-2 px-3 font-medium" 
               />
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-              <div className="relative">
+            ) : (
+              <div className="flex items-center gap-2">
                 <input 
                   type="date" 
                   value={tanggalMulai}
                   onChange={e => setTanggalMulai(e.target.value)}
                   className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block py-2 px-3 font-medium" 
                 />
-              </div>
-              <span className="text-slate-400 font-medium">-</span>
-              <div className="relative">
+                <span className="text-slate-400 font-medium">-</span>
                 <input 
                   type="date" 
                   value={tanggalSelesai}
@@ -191,31 +255,54 @@ export default function RekapKehadiranPage() {
                   className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block py-2 px-3 font-medium" 
                 />
               </div>
-            </div>
-          )}
+            )}
 
-          <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
+            <select 
+              value={kelasFilter}
+              onChange={e => setKelasFilter(e.target.value)}
+              className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 py-2 px-3 font-medium min-w-[120px]"
+            >
+              <option value="">Semua Kelas</option>
+              {daftarKelas.map(kelas => (
+                <option key={kelas} value={kelas}>{kelas}</option>
+              ))}
+            </select>
 
-          <select 
-            value={kelasFilter}
-            onChange={e => setKelasFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 py-2 px-3 font-medium min-w-[120px]"
-          >
-            <option value="">Semua Kelas</option>
-            {daftarKelas.map(kelas => (
-              <option key={kelas} value={kelas}>{kelas}</option>
-            ))}
-          </select>
+            {isOperator && (
+              <>
+                <select 
+                  value={filterMapel}
+                  onChange={e => setFilterMapel(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 py-2 px-3 font-medium"
+                >
+                  <option value="">Semua Mata Pelajaran</option>
+                  {daftarMapel.map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+                <select 
+                  value={filterGuru}
+                  onChange={e => setFilterGuru(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 py-2 px-3 font-medium max-w-[200px]"
+                >
+                  <option value="">Semua Guru</option>
+                  {daftarGuru.map(g => (
+                    <option key={g.id} value={g.id}>{g.display_name}</option>
+                  ))}
+                </select>
+              </>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto">
+        <div className="flex items-center gap-3 shrink-0">
           <button onClick={resetFilter} className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-600 bg-white rounded-lg hover:bg-slate-50 font-medium text-sm transition-colors">
             <RotateCcw size={16} />
             Reset Filter
           </button>
           <button 
             onClick={handleExportCSV} 
-            disabled={isExporting || dataRekap.length === 0}
+            disabled={isExporting || tabelData.length === 0}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 font-medium text-sm shadow-sm shadow-emerald-200 transition-colors disabled:opacity-50"
           >
             {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
@@ -225,109 +312,67 @@ export default function RekapKehadiranPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-        {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full">
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 size={32} className="animate-spin text-emerald-500" />
               <span className="ml-3 text-slate-500 font-medium">Memuat data kehadiran...</span>
             </div>
           ) : (
-            <table className="w-full text-left text-sm text-slate-600">
+            <table className="w-full text-left text-sm text-slate-600 whitespace-nowrap">
               <thead className="bg-slate-50 text-slate-500 uppercase font-semibold text-xs border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4 w-16 text-center">No</th>
-                  <th className="px-6 py-4">Nama Lengkap</th>
-                  <th className="px-6 py-4">NIS</th>
-                  <th className="px-6 py-4">Kelas</th>
-                  <th className="px-6 py-4">Waktu Scan</th>
+                  <th className="px-4 py-4 w-12 text-center sticky left-0 bg-slate-50 z-10 border-r border-slate-200">No</th>
+                  <th className="px-6 py-4 sticky left-[60px] bg-slate-50 z-10 border-r border-slate-200">Nama Lengkap</th>
+                  <th className="px-4 py-4">NIS</th>
+                  <th className="px-4 py-4">NISN</th>
+                  <th className="px-4 py-4">Kelas</th>
+                  <th className="px-4 py-4 text-center">Hadir</th>
+                  <th className="px-4 py-4 text-center">% Kehadiran</th>
+                  {sesiList.map((_, i) => (
+                    <th key={i} className="px-4 py-4 text-center">Sesi {i + 1}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {paginatedData.length > 0 ? paginatedData.map((item, idx) => (
+                {tabelData.length > 0 ? tabelData.map((item, idx) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 text-center font-medium text-slate-500">{startItem + idx}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-200 shrink-0">
-                          <img src={`https://ui-avatars.com/api/?name=${item.nama_lengkap.replace(/\s+/g, '+')}&background=f8fafc&color=64748b`} alt="Avatar" className="w-full h-full object-cover" />
-                        </div>
-                        <div>
-                          <div className="font-semibold text-slate-800">{item.nama_lengkap}</div>
-                        </div>
-                      </div>
+                    <td className="px-4 py-3 text-center font-medium text-slate-500 sticky left-0 bg-white z-10 border-r border-slate-100">{idx + 1}</td>
+                    <td className="px-6 py-3 sticky left-[60px] bg-white z-10 border-r border-slate-100">
+                      <div className="font-semibold text-slate-800">{item.nama_lengkap}</div>
                     </td>
-                    <td className="px-6 py-4 font-mono text-xs">{item.nis}</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                    <td className="px-4 py-3 font-mono text-xs">{item.nis}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{item.nisn || '-'}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">
                         {item.kelas}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
-                      {new Date(item.scanned_at).toLocaleString('id-ID', {
-                        day: '2-digit', month: '2-digit', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit', hour12: false
-                      })}
+                    <td className="px-4 py-3 text-center font-medium text-emerald-600">{item.jumlahHadir}/{totalSesi}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${item.persentase >= 75 ? 'bg-emerald-500' : item.persentase >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${item.persentase}%` }}></div>
+                        </div>
+                        <span className="text-xs font-semibold w-8">{item.persentase}%</span>
+                      </div>
                     </td>
+                    {item.waktuPerSesi.map((w: string, i: number) => (
+                      <td key={i} className="px-4 py-3 text-center text-xs">
+                        {w === '—' ? <span className="text-slate-300 font-bold">—</span> : <span className="font-medium text-slate-600">{w}</span>}
+                      </td>
+                    ))}
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
-                      Tidak ada data kehadiran yang sesuai filter.
+                    <td colSpan={7 + sesiList.length} className="px-6 py-12 text-center text-slate-400">
+                      Tidak ada data siswa yang sesuai filter.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           )}
-        </div>
-
-        {/* Pagination & Total */}
-        <div className="p-4 border-t border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/30">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-500">Tampilkan</span>
-            <select 
-              value={itemsPerPage} 
-              onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }} 
-              className="bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 py-1 pl-2 pr-6"
-            >
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-            <span className="text-sm text-slate-500">
-              Total: <span className="font-bold text-slate-800">{dataRekap.length}</span> siswa hadir
-            </span>
-          </div>
-          
-          <div className="flex gap-1">
-            <button 
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 border border-slate-200 text-slate-600 bg-white rounded-lg text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:text-slate-400"
-            >
-              Sebelumnya
-            </button>
-            
-            {[...Array(Math.min(totalPages, 5))].map((_, i) => (
-              <button 
-                key={i} 
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border ${currentPage === i + 1 ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm shadow-emerald-200' : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50'}`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            
-            <button 
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 border border-slate-200 text-slate-600 bg-white rounded-lg text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:text-slate-400"
-            >
-              Selanjutnya
-            </button>
-          </div>
         </div>
       </div>
     </>

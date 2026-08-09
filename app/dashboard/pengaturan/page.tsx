@@ -107,44 +107,53 @@ export default function PengaturanPage() {
                   className="text-sm font-bold border border-slate-300 rounded-md px-2 py-1.5 w-full text-slate-900 bg-white focus:ring-emerald-500 focus:border-emerald-500 outline-none mb-1"
                 />
               )}
-              <p className="text-slate-500 text-sm mb-2">{profil?.email || user?.email || 'Loading...'}</p>
+              <p className="text-slate-500 text-sm mb-4">{profil?.email || user?.email || 'Loading...'}</p>
               
-              <div className="mb-3">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Mata Pelajaran:</span>
-                {isEditingMapel ? (
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <select 
-                      value={tempMapel} 
-                      onChange={e => setTempMapel(e.target.value)} 
-                      className="text-sm border border-slate-300 rounded-md px-2 py-1.5 w-full text-slate-900 bg-white focus:ring-emerald-500 focus:border-emerald-500 outline-none" 
-                    >
-                      {MAPEL_LIST.map(m => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
-                    <button 
-                      onClick={handleSaveMapel} 
-                      disabled={loadingSave}
-                      className="px-3 py-1.5 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors shrink-0 flex items-center justify-center gap-1 disabled:opacity-50"
-                    >
-                      {loadingSave ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                      Simpan
-                    </button>
-                    <button 
-                      onClick={() => setIsEditingMapel(false)} 
-                      disabled={loadingSave}
-                      className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-md hover:bg-slate-200 transition-colors shrink-0 flex items-center justify-center gap-1 disabled:opacity-50"
-                    >
-                      Batal
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-700 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">{mataPelajaran || '-'}</span>
-                    <button onClick={() => { setIsEditingMapel(true); setTempNama(namaGuru); setTempMapel(mataPelajaran || MAPEL_LIST[0]); }} className="text-xs font-medium text-blue-500 hover:text-blue-600 transition-colors bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-md">Edit</button>
-                  </div>
-                )}
+              <div className="mb-4">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Posisi:</span>
+                <span className="font-medium text-slate-700 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
+                  {profil?.posisi === 'operator' ? 'Operator Sekolah' : 'Guru'}
+                </span>
               </div>
+              
+              {profil?.posisi !== 'operator' && (
+                <div className="mb-3">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Mata Pelajaran:</span>
+                  {isEditingMapel ? (
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <select 
+                        value={tempMapel} 
+                        onChange={e => setTempMapel(e.target.value)} 
+                        className="text-sm border border-slate-300 rounded-md px-2 py-1.5 w-full text-slate-900 bg-white focus:ring-emerald-500 focus:border-emerald-500 outline-none" 
+                      >
+                        {MAPEL_LIST.map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                      <button 
+                        onClick={handleSaveMapel} 
+                        disabled={loadingSave}
+                        className="px-3 py-1.5 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors shrink-0 flex items-center justify-center gap-1 disabled:opacity-50"
+                      >
+                        {loadingSave ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                        Simpan
+                      </button>
+                      <button 
+                        onClick={() => setIsEditingMapel(false)} 
+                        disabled={loadingSave}
+                        className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-md hover:bg-slate-200 transition-colors shrink-0 flex items-center justify-center gap-1 disabled:opacity-50"
+                      >
+                        Batal
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-slate-700 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">{mataPelajaran || '-'}</span>
+                      <button onClick={() => { setIsEditingMapel(true); setTempNama(namaGuru); setTempMapel(mataPelajaran || MAPEL_LIST[0]); }} className="text-xs font-medium text-blue-500 hover:text-blue-600 transition-colors bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-md">Edit</button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 mt-1">
                 <svg viewBox="0 0 24 24" className="w-3 h-3">

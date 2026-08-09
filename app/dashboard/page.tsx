@@ -22,11 +22,13 @@ import { insforge } from '@/lib/insforge';
 export default function DashboardPage() {
   const { user, profil, loading: authLoading } = useAuth();
   const [loadingStats, setLoadingStats] = useState(true);
+  const isOperator = profil?.posisi === 'operator';
 
   const [totalSiswa, setTotalSiswa] = useState(0);
   const [hadirHariIni, setHadirHariIni] = useState(0);
   const [sesiHariIni, setSesiHariIni] = useState(0);
   const [weeklyData, setWeeklyData] = useState<{name: string, value: number}[]>([]);
+  const [mapelStats, setMapelStats] = useState<any[]>([]);
 
   const todayStr = new Date().toLocaleDateString('id-ID', { 
     weekday: 'long', 
@@ -36,7 +38,7 @@ export default function DashboardPage() {
   });
 
   const fetchStats = useCallback(async () => {
-    if (!profil?.mataPelajaran) {
+    if (!isOperator && !profil?.mataPelajaran) {
       setLoadingStats(false);
       return;
     }
@@ -53,26 +55,31 @@ export default function DashboardPage() {
 
       // 2. Hadir Hari Ini
       const today = new Date().toISOString().split('T')[0];
-      const { count: countHadir } = await insforge.database
+      let queryHadir = insforge.database
         .from('kehadiran')
         .select('*', { count: 'exact', head: true })
-        .eq('mata_pelajaran', profil.mataPelajaran)
         .gte('scanned_at', `${today}T00:00:00`)
         .lte('scanned_at', `${today}T23:59:59`);
-      
+        
+      if (!isOperator) {
+        queryHadir = queryHadir.eq('mata_pelajaran', profil?.mataPelajaran || '');
+      }
+      const { count: countHadir } = await queryHadir;
       setHadirHariIni(countHadir || 0);
 
-      // 3. Sesi Hari ini (opsional, bisa diambil dari sesi_absen)
-      const { count: countSesi } = await insforge.database
+      // 3. Sesi Hari ini
+      let querySesi = insforge.database
         .from('sesi_absen')
         .select('*', { count: 'exact', head: true })
-        .eq('guru_uid', user?.id || '')
         .eq('tanggal', today);
-      
+        
+      if (!isOperator) {
+        querySesi = querySesi.eq('guru_uid', user?.id || '');
+      }
+      const { count: countSesi } = await querySesi;
       setSesiHariIni(countSesi || 0);
 
       // 4. Grafik Mingguan (5 hari kerja terakhir)
-      // Buat array 5 hari terakhir
       const last5Days = Array.from({length: 5}).map((_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (4 - i));
@@ -85,12 +92,16 @@ export default function DashboardPage() {
       const startDate = last5Days[0].date;
       const endDate = last5Days[4].date;
 
-      const { data: weeklyKehadiran } = await insforge.database
+      let queryWeekly = insforge.database
         .from('kehadiran')
         .select('scanned_at')
-        .eq('mata_pelajaran', profil.mataPelajaran)
         .gte('scanned_at', `${startDate}T00:00:00`)
         .lte('scanned_at', `${endDate}T23:59:59`);
+        
+      if (!isOperator) {
+        queryWeekly = queryWeekly.eq('mata_pelajaran', profil?.mataPelajaran || '');
+      }
+      const { data: weeklyKehadiran } = await queryWeekly;
 
       const newWeeklyData = last5Days.map(day => {
         const count = weeklyKehadiran?.filter(k => k.scanned_at.startsWith(day.date)).length || 0;
@@ -102,12 +113,41 @@ export default function DashboardPage() {
       });
 
       setWeeklyData(newWeeklyData);
+      
+      // 5. Statistik Mapel untuk Operator
+      if (isOperator) {
+        const { data: gurus } = await insforge.database.from('guru').select('*').neq('posisi', 'operator');
+        const { data: allSesi } = await insforge.database.from('sesi_absen').select('id, mata_pelajaran');
+        const { data: allKehadiran } = await insforge.database.from('kehadiran').select('id, mata_pelajaran');
+        
+        if (gurus) {
+          const stats = gurus.map(g => {
+            const mapel = g.mata_pelajaran || 'Belum diatur';
+            const sesi = allSesi?.filter(s => s.mata_pelajaran === mapel) || [];
+            const totalSesi = sesi.length;
+            const hadir = allKehadiran?.filter(k => k.mata_pelajaran === mapel) || [];
+            const totalHadir = hadir.length;
+            const persentase = (tSiswa > 0 && totalSesi > 0) 
+              ? Math.round((totalHadir / (tSiswa * totalSesi)) * 100) 
+              : 0;
+            return {
+              mataPelajaran: mapel,
+              guru: g.display_name,
+              totalSesi,
+              totalHadir,
+              persentase
+            };
+          });
+          setMapelStats(stats);
+        }
+      }
+
     } catch (err) {
       console.error('Error fetching dashboard stats', err);
     } finally {
       setLoadingStats(false);
     }
-  }, [profil?.mataPelajaran, user?.id]);
+  }, [isOperator, profil?.mataPelajaran, user?.id]);
 
   useEffect(() => {
     if (!authLoading) {
@@ -218,7 +258,7 @@ export default function DashboardPage() {
           </section>
 
           {/* Profil belum lengkap alert */}
-          {!profil?.mataPelajaran && (
+          {!isOperator && !profil?.mataPelajaran && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-6 mb-6">
               <h3 className="text-lg font-bold text-slate-800 mb-2">Profil Belum Lengkap</h3>
               <p className="text-slate-600 text-sm">
@@ -227,18 +267,60 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Today's Sessions (Dummy for now or can fetch sessions) */}
-          <section>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-slate-800">Sesi Hari Ini</h3>
-              <Link href="/dashboard/rekap-kehadiran" className="text-sm font-medium text-emerald-600 hover:text-emerald-700">Lihat Semua</Link>
-            </div>
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-x-auto">
-              <div className="p-6 text-center text-sm text-slate-500 min-w-max">
-                Data sesi terintegrasi otomatis dengan absensi.
+          {/* Quick Actions (only for Guru) */}
+          {!isOperator && (
+            <section>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-slate-800">Sesi Hari Ini</h3>
+                <Link href="/dashboard/rekap-kehadiran" className="text-sm font-medium text-emerald-600 hover:text-emerald-700">Lihat Semua</Link>
               </div>
-            </div>
-          </section>
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-x-auto">
+                <div className="p-6 text-center text-sm text-slate-500 min-w-max">
+                  Data sesi terintegrasi otomatis dengan absensi.
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Statistik Mapel for Operator */}
+          {isOperator && (
+            <section>
+              <h3 className="text-lg font-bold text-slate-800 mb-4">Statistik per Mata Pelajaran</h3>
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-x-auto">
+                <table className="w-full text-left text-sm text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 uppercase font-semibold text-[10px]">
+                    <tr>
+                      <th className="px-4 py-3">Mata Pelajaran</th>
+                      <th className="px-4 py-3">Guru Pengampu</th>
+                      <th className="px-4 py-3 text-center">Total Sesi</th>
+                      <th className="px-4 py-3 text-center">Total Hadir</th>
+                      <th className="px-4 py-3 text-center">% Kehadiran</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {mapelStats.map((stat, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 font-semibold text-slate-800">{stat.mataPelajaran}</td>
+                        <td className="px-4 py-3">{stat.guru}</td>
+                        <td className="px-4 py-3 text-center font-medium text-slate-800">{stat.totalSesi}</td>
+                        <td className="px-4 py-3 text-center text-emerald-600 font-medium">{stat.totalHadir}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`px-2 py-1 rounded-md text-xs font-semibold ${stat.persentase >= 75 ? 'bg-emerald-100 text-emerald-700' : stat.persentase >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                            {stat.persentase}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {mapelStats.length === 0 && !loadingStats && (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-slate-400">Belum ada data mata pelajaran</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
         </div>
 
         <div className="space-y-8">

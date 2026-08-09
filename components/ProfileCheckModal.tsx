@@ -13,6 +13,7 @@ const MAPEL_LIST = [
 export default function ProfileCheckModal() {
   const { user, profil, refreshProfil } = useAuth();
   const [namaLengkap, setNamaLengkap] = useState(profil?.displayName || '');
+  const [posisi, setPosisi] = useState<'guru' | 'operator'>('guru');
   const [mataPelajaran, setMataPelajaran] = useState(MAPEL_LIST[0]);
   const [saving, setSaving] = useState(false);
 
@@ -24,7 +25,8 @@ export default function ProfileCheckModal() {
       // Simpan ke tabel guru di InsForge
       await updateProfilGuru(user.id, {
         display_name: namaLengkap.trim(),
-        mata_pelajaran: mataPelajaran,
+        mata_pelajaran: posisi === 'guru' ? mataPelajaran : '',
+        posisi: posisi,
       });
 
       // Simpan juga ke localStorage (backward compatibility)
@@ -43,7 +45,7 @@ export default function ProfileCheckModal() {
     }
   };
 
-  const isFormComplete = namaLengkap.trim() !== '' && mataPelajaran !== '';
+  const isFormComplete = namaLengkap.trim() !== '' && (posisi === 'operator' || mataPelajaran !== '');
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
@@ -69,17 +71,30 @@ export default function ProfileCheckModal() {
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Mata Pelajaran</label>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Posisi Sebagai</label>
               <select 
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-emerald-500 focus:border-emerald-500 transition-colors outline-none cursor-pointer text-slate-900 font-medium" 
-                value={mataPelajaran} 
-                onChange={e => setMataPelajaran(e.target.value)}
+                value={posisi} 
+                onChange={e => setPosisi(e.target.value as 'guru' | 'operator')}
               >
-                {MAPEL_LIST.map(mapel => (
-                  <option key={mapel} value={mapel}>{mapel}</option>
-                ))}
+                <option value="guru">Guru</option>
+                <option value="operator">Operator Sekolah</option>
               </select>
             </div>
+            {posisi === 'guru' && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Mata Pelajaran</label>
+                <select 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-emerald-500 focus:border-emerald-500 transition-colors outline-none cursor-pointer text-slate-900 font-medium" 
+                  value={mataPelajaran} 
+                  onChange={e => setMataPelajaran(e.target.value)}
+                >
+                  {MAPEL_LIST.map(mapel => (
+                    <option key={mapel} value={mapel}>{mapel}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
         

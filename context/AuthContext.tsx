@@ -11,6 +11,7 @@ interface ProfilGuru {
   email: string;
   photoUrl: string;
   mataPelajaran: string;
+  posisi: 'guru' | 'operator';
 }
 
 interface AuthContextType {
@@ -55,11 +56,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const guru = data[0];
+    const posisi = (guru.posisi || 'guru') as 'guru' | 'operator';
     const profilData: ProfilGuru = {
       displayName: guru.display_name || '',
       email: guru.email || '',
       photoUrl: guru.photo_url || '',
       mataPelajaran: guru.mata_pelajaran || '',
+      posisi,
     };
 
     setProfil(profilData);
@@ -75,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       JSON.stringify({
         namaLengkap: profilData.displayName,
         mataPelajaran: profilData.mataPelajaran,
+        posisi: profilData.posisi,
       })
     );
   }, []);
