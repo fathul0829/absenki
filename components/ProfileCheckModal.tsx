@@ -21,14 +21,19 @@ export default function ProfileCheckModal() {
     if (!namaLengkap.trim() || !user) return;
     if (posisi === 'guru' && !mataPelajaran) return;
 
+    console.log('Tombol simpan diklik');
+    console.log('Data yang akan disimpan:', { nama: namaLengkap, posisi, mapel: mataPelajaran });
+
     setSaving(true);
     try {
+      console.log('Memanggil updateProfilGuru...');
       // Simpan ke tabel guru di InsForge
       await updateProfilGuru(user.id, {
         display_name: namaLengkap.trim(),
         mata_pelajaran: posisi === 'guru' ? mataPelajaran : '',
         posisi: posisi,
       });
+      console.log('updateProfilGuru berhasil');
 
       // Simpan juga ke localStorage (backward compatibility)
       localStorage.setItem('profilGuru', JSON.stringify({
@@ -37,10 +42,12 @@ export default function ProfileCheckModal() {
       }));
       localStorage.setItem('mapelGuru', mataPelajaran);
 
+      console.log('Memanggil refreshProfil...');
       // Refresh AuthContext agar profilLengkap berubah menjadi true
       await refreshProfil();
+      console.log('refreshProfil berhasil');
     } catch (error) {
-      console.error('Error menyimpan profil:', error);
+      console.error('Error saat simpan:', error);
     } finally {
       setSaving(false);
     }
