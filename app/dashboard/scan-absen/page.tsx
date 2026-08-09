@@ -64,24 +64,47 @@ export default function ScanAbsenPage() {
 
   // Start camera
   useEffect(() => {
+    let isMounted = true;
     const html5QrcodeScanner = new Html5Qrcode("reader");
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-    html5QrcodeScanner.start(
-      { facingMode: "environment" },
-      config,
-      (decodedText) => {
-        handleScan(decodedText);
-      },
-      (err) => {
-        // ignore frequent parse errors
+    const startScanner = async () => {
+      try {
+        await html5QrcodeScanner.start(
+          { facingMode: "environment" },
+          config,
+          (decodedText) => {
+            if (isMounted) handleScan(decodedText);
+          },
+          (err) => {
+            // ignore frequent parse errors
+          }
+        );
+      } catch (errEnv) {
+        console.warn("Kamera belakang gagal, mencoba kamera depan...", errEnv);
+        if (!isMounted) return;
+        try {
+          await html5QrcodeScanner.start(
+            { facingMode: "user" },
+            config,
+            (decodedText) => {
+              if (isMounted) handleScan(decodedText);
+            },
+            (err) => {
+              // ignore frequent parse errors
+            }
+          );
+        } catch (errUser) {
+          console.error("Kamera error:", errUser);
+          if (isMounted) setErrorMsg('Kamera tidak tersedia atau akses ditolak.');
+        }
       }
-    ).catch(err => {
-      console.error("Kamera error:", err);
-      setErrorMsg('Kamera tidak tersedia atau akses ditolak.');
-    });
+    };
+
+    startScanner();
 
     return () => {
+      isMounted = false;
       if (html5QrcodeScanner.isScanning) {
         html5QrcodeScanner.stop().catch(console.error);
       }

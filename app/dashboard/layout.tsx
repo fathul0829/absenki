@@ -41,7 +41,7 @@ export default function DashboardLayout({
 
   // User ada — render dashboard, modal akan muncul jika profil belum lengkap
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row relative overflow-hidden">
+    <div className="h-screen bg-slate-50 flex flex-col md:flex-row relative overflow-hidden">
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 sticky top-0 z-20">
         <div className="flex items-center gap-2">
@@ -62,11 +62,11 @@ export default function DashboardLayout({
       )}
 
       {/* Sidebar Area */}
-      <div className={`fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out md:sticky md:top-0 md:h-screen md:overflow-y-auto md:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <Sidebar onMobileClose={() => setIsMobileSidebarOpen(false)} />
       </div>
 
-      <div className="flex-1 p-4 md:p-8 overflow-y-auto h-screen md:h-auto min-h-screen w-full">
+      <div className="flex-1 p-4 md:p-8 overflow-y-auto h-screen w-full">
         {!profilLengkap && <ProfileCheckModal />}
         {children}
       </div>
