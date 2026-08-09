@@ -5,6 +5,7 @@ import { Download, RotateCcw, Users, CalendarCheck, Percent, Calendar, Loader2 }
 import { daftarKelas } from '@/constants/kelas';
 import { useAuth } from '@/context/AuthContext';
 import { insforge } from '@/lib/insforge';
+import { getDaftarMapel, getDaftarGuru } from '@/lib/guru';
 
 const KartuStatistik = ({ icon: Icon, label, value }: { icon: any, label: string, value: string | number }) => (
   <div className="bg-white p-4 lg:p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
@@ -21,6 +22,9 @@ const KartuStatistik = ({ icon: Icon, label, value }: { icon: any, label: string
 export default function RekapKehadiranPage() {
   const { user, profil, loading: authLoading } = useAuth();
   const isOperator = profil?.posisi === 'operator';
+
+  console.log('Posisi user:', profil?.posisi);
+  console.log('isOperator:', isOperator);
 
   const today = new Date().toISOString().split('T')[0];
   const [waktuMode, setWaktuMode] = useState<'tunggal' | 'rentang'>('tunggal');
@@ -48,11 +52,13 @@ export default function RekapKehadiranPage() {
 
   useEffect(() => {
     if (isOperator) {
-      import('@/lib/guru').then(({ getDaftarMapel, getDaftarGuru }) => {
-        getDaftarMapel().then(setDaftarMapel);
-        getDaftarGuru().then(data => {
-          setDaftarGuru(data.filter(g => g.posisi === 'guru'));
-        });
+      getDaftarMapel().then(hasil => {
+        console.log('Daftar mapel dari DB:', hasil);
+        setDaftarMapel(hasil);
+      });
+      getDaftarGuru().then(hasil => {
+        console.log('Daftar guru dari DB:', hasil);
+        setDaftarGuru(hasil.filter(g => g.posisi === 'guru'));
       });
     }
   }, [isOperator]);
