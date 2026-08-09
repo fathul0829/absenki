@@ -52,14 +52,23 @@ export default function RekapKehadiranPage() {
 
   useEffect(() => {
     if (isOperator) {
+      console.log('User adalah operator, mengambil data...');
+      
       getDaftarMapel().then(hasil => {
-        console.log('Daftar mapel dari DB:', hasil);
+        console.log('Hasil getDaftarMapel:', hasil);
         setDaftarMapel(hasil);
+      }).catch(err => {
+        console.error('Error getDaftarMapel:', err);
       });
+
       getDaftarGuru().then(hasil => {
-        console.log('Daftar guru dari DB:', hasil);
-        setDaftarGuru(hasil.filter(g => g.posisi === 'guru'));
+        console.log('Hasil getDaftarGuru:', hasil);
+        setDaftarGuru(hasil);
+      }).catch(err => {
+        console.error('Error getDaftarGuru:', err);
       });
+    } else {
+      console.log('User bukan operator, posisi:', profil?.posisi);
     }
   }, [isOperator]);
 
