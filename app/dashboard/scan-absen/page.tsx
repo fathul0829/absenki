@@ -11,7 +11,7 @@ import { cekDuplikat, addKehadiran, getKehadiranBySesi, type Kehadiran } from '@
 type NotificationType = 'success' | 'warning' | 'error' | '';
 
 function bunyiBeep(isError = false) {
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.connect(gain);
