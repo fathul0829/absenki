@@ -18,7 +18,8 @@ export default function ProfileCheckModal() {
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    if (!namaLengkap.trim() || !mataPelajaran || !user) return;
+    if (!namaLengkap.trim() || !user) return;
+    if (posisi === 'guru' && !mataPelajaran) return;
 
     setSaving(true);
     try {
