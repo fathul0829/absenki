@@ -68,8 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfil(profilData);
 
     const lengkap =
-      typeof guru.mata_pelajaran === 'string' &&
-      guru.mata_pelajaran.trim() !== '';
+      posisi === 'operator' ||
+      (typeof guru.mata_pelajaran === 'string' &&
+      guru.mata_pelajaran.trim() !== '');
     setProfilLengkap(lengkap);
 
     // Sinkronisasi ke localStorage
@@ -136,11 +137,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Cek jika profil belum lengkap di DB, coba migrasi dari localStorage
         const { data: dbGuru } = await insforge.database
           .from('guru')
-          .select('mata_pelajaran')
+          .select('mata_pelajaran, posisi')
           .eq('auth_user_id', currentUser.id)
           .single();
           
-        if (dbGuru && (!dbGuru.mata_pelajaran || dbGuru.mata_pelajaran === '')) {
+        if (dbGuru && dbGuru.posisi !== 'operator' && (!dbGuru.mata_pelajaran || dbGuru.mata_pelajaran === '')) {
           const localProfil = localStorage.getItem('profilGuru');
           if (localProfil) {
             const parsed = JSON.parse(localProfil);

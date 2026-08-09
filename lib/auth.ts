@@ -75,13 +75,15 @@ export async function saveGuruProfile(
 export async function checkProfilLengkap(userId: string): Promise<boolean> {
   const { data, error } = await insforge.database
     .from('guru')
-    .select('mata_pelajaran')
+    .select('mata_pelajaran, posisi')
     .eq('auth_user_id', userId);
 
   if (error || !data || data.length === 0) return false;
 
-  const mataPelajaran = data[0]?.mata_pelajaran;
-  return typeof mataPelajaran === 'string' && mataPelajaran.trim() !== '';
+  const guru = data[0];
+  if (guru.posisi === 'operator') return true;
+  
+  return typeof guru.mata_pelajaran === 'string' && guru.mata_pelajaran.trim() !== '';
 }
 
 /**
