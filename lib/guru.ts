@@ -110,14 +110,15 @@ export async function getDaftarGuru(): Promise<
  */
 export async function getDaftarMapel(): Promise<string[]> {
   const { data, error } = await insforge.database
-    .from('sesi_absen')
-    .select('mata_pelajaran');
+    .from('guru')
+    .select('mata_pelajaran')
+    .eq('posisi', 'guru');
 
   if (error || !data) {
     console.error('Error fetching daftar mapel:', error);
     return [];
   }
 
-  const mapelSet = new Set(data.map((item: any) => item.mata_pelajaran).filter(Boolean));
+  const mapelSet = new Set(data.map((item: any) => item.mata_pelajaran).filter((m: string) => m && m.trim() !== ''));
   return Array.from(mapelSet).sort();
 }

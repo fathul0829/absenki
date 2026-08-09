@@ -46,17 +46,24 @@ export default function RekapKehadiranPage() {
   const tanggalDari = waktuMode === 'tunggal' ? tanggalTunggal : tanggalMulai;
   const tanggalSampai = waktuMode === 'tunggal' ? tanggalTunggal : tanggalSelesai;
 
+  const [semuaGuru, setSemuaGuru] = useState<any[]>([]);
+
   useEffect(() => {
     if (isOperator) {
-      insforge.database.from('guru').select('*').neq('posisi', 'operator').then(({ data }) => {
-        if (data) {
-          setDaftarGuru(data);
-          const mapels = Array.from(new Set(data.map(g => g.mata_pelajaran).filter(Boolean)));
-          setDaftarMapel(mapels);
-        }
+      import('@/lib/guru').then(({ getDaftarMapel, getDaftarGuru }) => {
+        getDaftarMapel().then(setDaftarMapel);
+        getDaftarGuru().then(setSemuaGuru);
       });
     }
   }, [isOperator]);
+
+  useEffect(() => {
+    let filtered = semuaGuru.filter(g => g.posisi === 'guru');
+    if (filterMapel) {
+      filtered = filtered.filter(g => g.mata_pelajaran === filterMapel);
+    }
+    setDaftarGuru(filtered);
+  }, [filterMapel, semuaGuru]);
 
   const fetchRekap = useCallback(async () => {
     if (!isOperator && !profil?.mataPelajaran) return;
@@ -272,7 +279,10 @@ export default function RekapKehadiranPage() {
               <>
                 <select 
                   value={filterMapel}
-                  onChange={e => setFilterMapel(e.target.value)}
+                  onChange={e => {
+                    setFilterMapel(e.target.value);
+                    setFilterGuru(''); // Reset guru saat mapel berubah
+                  }}
                   className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 py-2 px-3 font-medium"
                 >
                   <option value="">Semua Mata Pelajaran</option>
