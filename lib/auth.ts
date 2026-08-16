@@ -19,7 +19,7 @@ export async function signInWithGoogle() {
  */
 export async function signOut() {
   await insforge.auth.signOut();
-  window.location.href = '/login';
+  window.location.href = '/';
 }
 
 /**
