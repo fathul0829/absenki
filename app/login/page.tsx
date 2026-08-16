@@ -218,10 +218,10 @@ function LoginContent() {
       {/* ========================================================================= */}
       {/* MOBILE LAYOUT (di bawah md)                                               */}
       {/* ========================================================================= */}
-      <div className="flex md:hidden min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative overflow-hidden flex-col justify-center items-center p-4">
+      <div className="flex md:hidden min-h-screen bg-slate-100 relative overflow-hidden flex-col justify-center items-center p-4">
         {/* Decorative Blob */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-slate-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-slate-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
 
         {/* Main Card */}
         <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8 z-10 border border-slate-100">
