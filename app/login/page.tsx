@@ -58,7 +58,7 @@ function LoginContent() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-[#a7f3d0] border-t-[#00a86b] rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -71,92 +71,99 @@ function LoginContent() {
   return (
     <div className="min-h-screen">
       {/* ========================================================================= */}
-      {/* DESKTOP LAYOUT (md ke atas)                                               */}
+      {/* DESKTOP LAYOUT (md ke atas) - Sesuai Preview                               */}
       {/* ========================================================================= */}
       <div className="hidden md:flex min-h-screen">
-        {/* Kolom Kiri - Panel Hijau (50% lebar) */}
-        <div className="w-1/2 bg-green-600 relative overflow-hidden flex flex-col justify-between p-12">
-          {/* Elemen Dekoratif Geometric */}
-          {/* Lingkaran besar di pojok kiri atas */}
-          <div className="absolute -top-12 -left-12 w-44 h-44 rounded-full bg-green-500 opacity-50 pointer-events-none" />
+        {/* Kolom Kiri - Panel Hijau Emerald (#009b63 s/d #00b074) */}
+        <div className="w-1/2 bg-gradient-to-br from-[#00b074] via-[#009e66] to-[#008955] relative overflow-hidden flex flex-col justify-between p-12 lg:p-16 select-none">
+          {/* 1. Lingkaran putih semi-lingkaran di pojok kiri atas */}
+          <div className="absolute -top-8 left-12 w-20 h-20 rounded-full bg-white shadow-sm pointer-events-none" />
 
-          {/* Dua balok/pill vertikal di kiri atas */}
-          <div className="absolute top-16 left-36 w-5 h-20 rounded-full bg-green-400 opacity-60 pointer-events-none" />
-          <div className="absolute top-24 left-44 w-5 h-28 rounded-full bg-green-400 opacity-60 pointer-events-none" />
-
-          {/* Lingkaran kecil dengan border */}
-          <div className="absolute top-40 right-28 w-14 h-14 rounded-full border-2 border-green-300 opacity-60 pointer-events-none" />
-          <div className="absolute top-20 right-44 w-6 h-6 rounded-full border-2 border-green-300 opacity-50 pointer-events-none" />
-
-          {/* Titik-titik grid (dot pattern) */}
+          {/* 2. Titik-titik grid (Dot Matrix) di kiri atas */}
           <div 
-            className="absolute top-24 right-12 w-32 h-32 opacity-30 pointer-events-none" 
+            className="absolute top-16 left-10 w-20 h-20 opacity-80 pointer-events-none"
             style={{
               backgroundImage: 'radial-gradient(circle, #ffffff 2px, transparent 2px)',
-              backgroundSize: '16px 16px'
-            }} 
+              backgroundSize: '12px 12px'
+            }}
           />
+
+          {/* 3. Dua balok/pill vertikal di area atas */}
+          <div className="absolute -top-4 left-32 w-5 h-28 rounded-full bg-white/20 border-t-0 border border-white/40 pointer-events-none" />
+          <div className="absolute -top-8 left-40 w-6 h-40 rounded-full bg-gradient-to-b from-white/40 via-white/25 to-white/10 pointer-events-none" />
+
+          {/* 4. Lingkaran konsentris & floating dot di kanan atas */}
+          <div className="absolute top-14 right-44 w-11 h-11 rounded-full border-2 border-white/70 flex items-center justify-center pointer-events-none">
+            <div className="w-2.5 h-2.5 rounded-full bg-white" />
+          </div>
+          <div className="absolute top-10 right-32 w-3 h-3 rounded-full bg-white/90 pointer-events-none" />
+
+          {/* 5. 3D Sphere hijau mint & Dot Matrix di kiri bawah */}
+          <div className="absolute bottom-36 left-12 w-9 h-9 rounded-full bg-gradient-to-tr from-[#34d399] via-[#a7f3d0] to-white shadow-[0_8px_16px_rgba(0,0,0,0.18)] pointer-events-none" />
           <div 
-            className="absolute bottom-56 right-16 w-28 h-28 opacity-25 pointer-events-none" 
+            className="absolute bottom-16 left-10 w-20 h-20 opacity-80 pointer-events-none"
             style={{
               backgroundImage: 'radial-gradient(circle, #ffffff 2px, transparent 2px)',
-              backgroundSize: '14px 14px'
-            }} 
+              backgroundSize: '12px 12px'
+            }}
           />
 
-          {/* Lingkaran di pojok kiri bawah */}
-          <div className="absolute -bottom-12 -left-12 w-52 h-52 rounded-full bg-green-400 opacity-40 pointer-events-none" />
-
-          {/* Elemen setengah lingkaran di bawah */}
-          <div className="absolute -bottom-8 right-36 w-36 h-36 rounded-full border-4 border-green-300 opacity-40 pointer-events-none" />
-
-          {/* Tanda "×" di area bawah tengah */}
-          <div className="absolute bottom-40 left-1/2 -translate-x-1/2 text-2xl font-light text-white opacity-50 select-none pointer-events-none">
+          {/* 6. Tanda "✕" di area bawah tengah */}
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 text-2xl font-bold text-white/90 pointer-events-none">
             ✕
           </div>
-          <div className="absolute top-52 left-20 text-lg font-light text-white opacity-40 select-none pointer-events-none">
-            ✕
+
+          {/* 7. Planet 3D & Cincin Orbit di pojok kanan bawah */}
+          <div className="absolute -bottom-20 -right-20 w-80 h-80 rounded-full border-2 border-white/80 flex items-center justify-center pointer-events-none">
+            <div className="w-60 h-60 rounded-full border border-white/40 flex items-center justify-center">
+              {/* 3D Core Planet */}
+              <div className="w-44 h-44 rounded-full bg-gradient-to-tr from-[#008754] via-[#00c984] to-[#6ee7b7] shadow-[inset_0_-8px_20px_rgba(0,0,0,0.25)]" />
+            </div>
+            {/* Satellite 3D Ball */}
+            <div className="absolute top-12 left-4 w-9 h-9 rounded-full bg-gradient-to-tr from-[#6ee7b7] via-[#a7f3d0] to-white shadow-[0_4px_12px_rgba(0,0,0,0.25)]" />
           </div>
 
           {/* Spacer top */}
           <div />
 
-          {/* Konten Teks di Kiri Bawah */}
-          <div className="relative z-10 mb-8 max-w-md">
-            <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
+          {/* Konten Teks Headline di Kiri */}
+          <div className="relative z-10 my-auto pl-4 lg:pl-6 max-w-md">
+            <h1 className="text-4xl lg:text-5xl font-bold text-white leading-[1.18] tracking-tight">
               Absensi<br />
               Mudah,<br />
               Kehadiran<br />
               Terpercaya
             </h1>
-            <p className="text-green-100 text-sm mt-3 max-w-xs leading-relaxed">
+            <p className="text-[#e6fbf3] text-sm lg:text-base mt-4 max-w-xs font-normal leading-relaxed opacity-95">
               Kelola kehadiran dengan cepat, akurat, dan praktis.
             </p>
           </div>
+
+          {/* Spacer bottom */}
+          <div />
         </div>
 
         {/* Kolom Kanan - Form Login (50% lebar) */}
-        <div className="w-1/2 bg-white flex items-center justify-center relative px-12 min-h-screen">
+        <div className="w-1/2 bg-white flex items-center justify-center relative px-8 lg:px-16 min-h-screen">
           <div className="w-full max-w-sm flex flex-col items-center">
-            {/* Logo AbsenKi' */}
-            <div className="w-20 h-20 rounded-2xl shadow-md mb-6 relative overflow-hidden bg-white border border-slate-100 flex items-center justify-center p-2">
+            {/* Logo AbsenKi' Sesuai Preview */}
+            <div className="w-16 h-16 mb-6 relative">
               <Image
                 src="/logo/logo only 2(no bg).png"
                 alt="AbsenKi Logo"
-                width={72}
-                height={72}
+                fill
                 className="object-contain"
                 priority
               />
             </div>
 
             {/* Judul */}
-            <h2 className="text-2xl font-bold text-slate-800 text-center">
+            <h2 className="text-xl lg:text-2xl font-bold text-slate-800 text-center tracking-tight">
               Selamat Datang di AbsenKi&apos;
             </h2>
 
             {/* Deskripsi */}
-            <p className="text-slate-500 text-sm text-center mt-2 mb-8 max-w-sm leading-relaxed">
+            <p className="text-slate-500 text-xs lg:text-sm text-center mt-2.5 mb-8 max-w-sm leading-relaxed">
               Masuk ke akun Anda untuk mengelola kehadiran, membuat QR code, dan melihat rekap absensi dengan mudah.
             </p>
 
@@ -171,13 +178,13 @@ function LoginContent() {
             <button
               onClick={handleGoogleLogin}
               disabled={loading}
-              className={`w-full flex items-center justify-center gap-3 border border-slate-200 rounded-xl py-3 px-6 text-slate-700 font-medium hover:bg-slate-50 transition-all duration-200 shadow-sm ${
+              className={`w-full flex items-center justify-center gap-3 border border-slate-200 rounded-xl py-3 px-6 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-all duration-200 shadow-xs ${
                 loading ? 'opacity-60 cursor-not-allowed' : ''
               }`}
             >
               {loading ? (
                 <>
-                  <span className="w-5 h-5 border-2 border-slate-300 border-t-green-600 rounded-full animate-spin"></span>
+                  <span className="w-4 h-4 border-2 border-slate-300 border-t-[#00a86b] rounded-full animate-spin"></span>
                   <span className="text-slate-600">Memuat...</span>
                 </>
               ) : (
@@ -211,10 +218,10 @@ function LoginContent() {
       {/* ========================================================================= */}
       {/* MOBILE LAYOUT (di bawah md)                                               */}
       {/* ========================================================================= */}
-      <div className="flex md:hidden min-h-screen bg-gradient-to-br from-green-50 to-green-100 relative overflow-hidden flex-col justify-center items-center p-4">
+      <div className="flex md:hidden min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative overflow-hidden flex-col justify-center items-center p-4">
         {/* Decorative Blob */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70"></div>
 
         {/* Main Card */}
         <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8 z-10 border border-slate-100">
@@ -248,13 +255,13 @@ function LoginContent() {
             <button 
               onClick={handleGoogleLogin}
               disabled={loading}
-              className={`w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 hover:border-green-500 hover:bg-green-50 text-slate-700 font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${
+              className={`w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 hover:border-[#00a86b] hover:bg-emerald-50 text-slate-700 font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${
                 loading ? 'opacity-60 cursor-not-allowed' : ''
               }`}
             >
               {loading ? (
                 <>
-                  <span className="w-5 h-5 border-2 border-slate-300 border-t-green-500 rounded-full animate-spin"></span>
+                  <span className="w-5 h-5 border-2 border-slate-300 border-t-[#00a86b] rounded-full animate-spin"></span>
                   Sedang masuk...
                 </>
               ) : (
@@ -288,7 +295,7 @@ export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
+        <div className="w-10 h-10 border-4 border-[#a7f3d0] border-t-[#00a86b] rounded-full animate-spin"></div>
       </div>
     }>
       <LoginContent />
