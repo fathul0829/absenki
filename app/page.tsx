@@ -528,7 +528,7 @@ export default function LandingPage() {
             <div className="flex flex-col items-center md:items-start">
               <div className="relative h-8 w-36 mb-2">
                 <Image
-                  src="absenki/public/logo/logo side text (w bg).png"
+                  src="/logo/logo side text (w bg).png"
                   alt="AbsenKi Logo"
                   fill
                   className="object-contain object-left"
