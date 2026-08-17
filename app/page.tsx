@@ -15,19 +15,16 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-xs transition-all">
         <div className="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between">
           {/* Logo Brand */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 relative shrink-0">
+          <Link href="/" className="flex items-center group">
+            <div className="relative h-10 w-36 sm:w-40">
               <Image
-                src="/logo/logo only 2(no bg).png"
+                src="/logo/logo side text (no bg).png"
                 alt="AbsenKi Logo"
                 fill
-                className="object-contain transition-transform group-hover:scale-105"
+                className="object-contain object-left transition-transform group-hover:scale-105"
                 priority
               />
             </div>
-            <span className="text-xl font-bold text-slate-800 tracking-tight">
-              Absen<span className="text-green-600">Ki&apos;</span>
-            </span>
           </Link>
 
           {/* Desktop Navigation Links */}
@@ -117,12 +114,6 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
             {/* Kiri: Teks & CTA */}
             <div className="lg:col-span-6 flex flex-col items-start text-left">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200/80 text-green-700 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-6 shadow-2xs">
-                <span>⭐</span>
-                <span>Aplikasi Absensi Digital untuk Guru</span>
-              </div>
-
               {/* Headline */}
               <h1 className="text-4xl sm:text-5xl lg:text-[52px] font-extrabold text-slate-800 leading-[1.15] tracking-tight">
                 Absensi Siswa<br />
@@ -150,24 +141,6 @@ export default function LandingPage() {
                 >
                   Pelajari Lebih Lanjut
                 </a>
-              </div>
-
-              {/* Social Proof */}
-              <div className="flex items-center gap-3.5 mt-8 pt-4 border-t border-slate-100 w-full">
-                <div className="flex -space-x-2 overflow-hidden shrink-0">
-                  <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-green-500 text-white text-xs font-bold flex items-center justify-center">
-                    SN
-                  </div>
-                  <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">
-                    AR
-                  </div>
-                  <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-teal-600 text-white text-xs font-bold flex items-center justify-center">
-                    DW
-                  </div>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                  Dipercaya oleh guru di <strong className="text-slate-700 font-semibold">1000+ sekolah</strong> di Indonesia
-                </p>
               </div>
             </div>
 
@@ -553,18 +526,13 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
             {/* Left: Brand & Description & Social Icons */}
             <div className="flex flex-col items-center md:items-start">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-7 h-7 relative shrink-0">
-                  <Image
-                    src="/logo/logo only 2(no bg).png"
-                    alt="AbsenKi Logo"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <span className="text-lg font-bold text-white tracking-tight">
-                  Absen<span className="text-green-500">Ki&apos;</span>
-                </span>
+              <div className="relative h-8 w-36 mb-2">
+                <Image
+                  src="/logo/logo side text (no bg).png"
+                  alt="AbsenKi Logo"
+                  fill
+                  className="object-contain object-left"
+                />
               </div>
               <p className="text-slate-400 text-xs sm:text-sm max-w-xs leading-relaxed">
                 Absensi siswa jadi lebih mudah, cepat, dan akurat dengan AbsenKi&apos;.
