@@ -18,7 +18,7 @@ export default function LandingPage() {
           <Link href="/" className="flex items-center group">
             <div className="relative h-10 w-36 sm:w-40">
               <Image
-                src="/logo/logo side text (no bg).png"
+                src="/logo/logo side text (w bg).png"
                 alt="AbsenKi Logo"
                 fill
                 className="object-contain object-left transition-transform group-hover:scale-105"
