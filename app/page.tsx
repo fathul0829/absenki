@@ -13,12 +13,12 @@ export default function LandingPage() {
       {/* 1. NAVBAR                                                                 */}
       {/* ========================================================================= */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-xs transition-all">
-        <div className="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           {/* Logo Brand */}
           <Link href="/" className="flex items-center group">
-            <div className="relative h-10 w-36 sm:w-40">
+            <div className="relative w-[173px] h-[39.52px]">
               <Image
-                src="/logo/logo side text (w bg).png"
+                src="/logo/logo side text 2(no bg).png"
                 alt="AbsenKi Logo"
                 fill
                 className="object-contain object-left transition-transform group-hover:scale-105"
@@ -528,7 +528,7 @@ export default function LandingPage() {
             <div className="flex flex-col items-center md:items-start">
               <div className="relative h-8 w-36 mb-2">
                 <Image
-                  src="/logo/logo side text (no bg).png"
+                  src="/logo/logo side text 2(no bg).png"
                   alt="AbsenKi Logo"
                   fill
                   className="object-contain object-left"
